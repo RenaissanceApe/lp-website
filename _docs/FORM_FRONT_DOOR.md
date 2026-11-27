@@ -19,8 +19,9 @@ visitor's browser ──POST /intake──▶ Worker ──store──▶ D1 dat
    check-your-inbox page in their language (or back to the form when the email or `form_type`
    is wrong, the same rule n8n uses). The visitor never waits for n8n. Every form is stored and
    forwarded, even a wrong one: n8n is the one place that screens and logs what it skips.
-2. Straight after, it sends the same form to n8n, with a submission id. n8n answering 2xx or 3xx
-   means "got it".
+2. Straight after, it sends the same form to n8n, with a submission id. n8n answering 2xx, or 303
+   back to the site (its own redirect), means "got it". Any other redirect, such as a tunnel's
+   login page, does not count: the form is kept and retried.
 3. A run every minute retries anything n8n has not confirmed. While n8n is off it sends one try a
    minute, not one per waiting form.
 4. If something has waited **more than 10 minutes**, you get **one** Telegram message: how many

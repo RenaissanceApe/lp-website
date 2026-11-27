@@ -3,7 +3,7 @@
 
 -- One row per accepted submission. body is the form exactly as the browser sent
 -- it; it is what gets forwarded to n8n. forwarded_at is set when n8n confirmed
--- (2xx or 3xx); the row is deleted RETENTION_DAYS after that. Rows n8n has not
+-- (2xx, or 303 back to the site); the row is deleted RETENTION_DAYS after that. Rows n8n has not
 -- confirmed are kept until it does.
 CREATE TABLE IF NOT EXISTS submissions (
   id              TEXT PRIMARY KEY,      -- sent to n8n as X-LP-Submission-Id

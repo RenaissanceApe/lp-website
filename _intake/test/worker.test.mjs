@@ -186,3 +186,26 @@ test('retention: deleted 7 days after n8n confirmed, not before; unconfirmed nev
   assert.equal(left[0].form_type, 'newsletter');
   assert.equal(left[0].forwarded_at, null);
 });
+
+for (const [label, answer, delivered] of [
+  ['302 to another host (login page)', { status: 302, location: 'https://auth.example.com/login' }, false],
+  ['303 to another host', { status: 303, location: 'https://auth.example.com/login' }, false],
+  ['303 to the site', { status: 303, location: 'https://lumenandpixel.com/thank-you.html' }, true],
+]) {
+  test(`n8n answers ${label}: ${delivered ? 'delivered' : 'kept and retried'}`, async () => {
+    net.state.n8n = answer;
+    await worker.fetch(post(CONTACT_EN), env, ctx);
+    await ctx.settle();
+    const r = rows()[0];
+    assert.equal(Boolean(r.forwarded_at), delivered);
+    if (!delivered) {
+      assert.match(r.last_result, /to auth\.example\.com$/);
+      age(db, 1); await runScheduled(env);
+      assert.equal(net.calls.n8n.length, 2);
+      assert.equal(rows()[0].forwarded_at, null);
+      // never deleted by retention while undelivered
+      age(db, 30 * 24 * 60); await runScheduled(env);
+      assert.equal(rows().length, 1);
+    }
+  });
+}

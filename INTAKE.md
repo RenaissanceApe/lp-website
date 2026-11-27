@@ -141,14 +141,19 @@ X-LP-Intake-Secret: <secret>      only when the INTAKE_SECRET setting exists
 
 - The body is byte-for-byte what the browser sent: the fields above, honeypot
   included. n8n changes nothing to receive it.
-- **Success is any 2xx or 3xx answer** (n8n's webhook answers with a 303; the
-  Worker does not follow it). Anything else, no answer within 10 seconds, or a
-  network error means "try again".
+- **Success is a 2xx, or a 303 whose `Location` is an absolute `https://` URL on
+  `lumenandpixel.com` or `www.lumenandpixel.com`** (n8n's own redirect to the done
+  page; the Worker does not follow it). **n8n must answer the webhook with one of
+  those**, wherever it runs. Any other 3xx (for example a tunnel or access gate
+  sending a login page), a relative `Location`, any other status, no answer within
+  10 seconds, or a network error means "not delivered": the row is kept and
+  retried, and only the host of a refused redirect is recorded.
 - n8n sees Cloudflare's address, not the visitor's.
 - n8n answers right after its Normalize step, before Notion, Telegram and email
   run: "delivered" means n8n received it, not that those steps worked. v2-01's
   error handler (v2-00) covers them.
-- Agreed with Ops (owner of v2-01) on 27 Nov 2026; their copy is
+- Agreed with Ops (owner of v2-01) on 27 Nov 2026, the success rule tightened the
+  same day so a misrouted redirect can never count as delivered; their copy is
   `ops/n8n-home/FORWARDING_CONTRACT.md` in lp-ops. n8n checking the secret and
   de-duplicating on `X-LP-Submission-Id` are proposed to the owner after the move.
 

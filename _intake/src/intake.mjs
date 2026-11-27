@@ -42,7 +42,13 @@ export async function forward(env, row) {
       redirect: 'manual',
       signal: AbortSignal.timeout(setting(env, 'FORWARD_TIMEOUT_MS')),
     });
-    return { ok: isDelivered(res.status), result: `HTTP ${res.status}`, reachable: true };
+    const ok = isDelivered(res.status, res.headers.get('Location'));
+    // A refused 3xx is recorded with its host only (never the full URL).
+    let where = '';
+    if (!ok && res.status >= 300 && res.status < 400) {
+      try { where = ' to ' + new URL(res.headers.get('Location') || '').hostname; } catch { where = ' (no usable Location)'; }
+    }
+    return { ok, result: `HTTP ${res.status}${where}`, reachable: true };
   } catch (e) {
     return { ok: false, result: String((e && e.name) || 'error'), reachable: false };
   }

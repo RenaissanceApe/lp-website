@@ -52,9 +52,18 @@ test('forward headers: id, time, attempt; secret only when set', () => {
   assert.equal(forwardHeaders(row, { INTAKE_SECRET: 's' })['X-LP-Intake-Secret'], 's');
 });
 
-test('2xx and 3xx count as delivered', () => {
-  for (const s of [200, 204, 302, 303]) assert.equal(isDelivered(s), true, s);
-  for (const s of [400, 401, 404, 500, 503]) assert.equal(isDelivered(s), false, s);
+test('delivered = 2xx, or a 303 back to the site; any other 3xx is not', () => {
+  for (const s of [200, 201, 204]) assert.equal(isDelivered(s, null), true, s);
+  assert.equal(isDelivered(303, 'https://lumenandpixel.com/thank-you.html'), true);
+  assert.equal(isDelivered(303, 'https://www.lumenandpixel.com/pt/check-your-inbox.html'), true);
+  assert.equal(isDelivered(303, 'https://login.example.com/auth'), false, '303 to another host');
+  assert.equal(isDelivered(302, 'https://login.example.com/auth'), false, '302 to another host');
+  assert.equal(isDelivered(302, 'https://lumenandpixel.com/thank-you.html'), false, '302 even to the site');
+  assert.equal(isDelivered(303, '/login'), false, 'relative Location');
+  assert.equal(isDelivered(303, 'http://lumenandpixel.com/'), false, 'not https');
+  assert.equal(isDelivered(303, 'https://lumenandpixel.com.evil.example/'), false, 'look-alike host');
+  assert.equal(isDelivered(303, null), false, 'no Location');
+  for (const s of [301, 307, 400, 401, 404, 500, 503]) assert.equal(isDelivered(s, 'https://lumenandpixel.com/'), false, s);
 });
 
 test('failure page: right language, escapes what the visitor typed, loads nothing', () => {

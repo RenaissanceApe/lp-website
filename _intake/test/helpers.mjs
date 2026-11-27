@@ -34,7 +34,8 @@ export function makeCtx() {
   return { waitUntil: p => pending.push(p), settle: () => Promise.all(pending.splice(0)) };
 }
 
-/* n8n behaviour: 'up' (303), 'down' (network error), or a status number. */
+/* n8n behaviour: 'up' (303 to the site), 'down' (network error), a status number,
+   or { status, location }. */
 export function installFetch() {
   const calls = { n8n: [], telegram: [] };
   const state = { n8n: 'up' };
@@ -45,8 +46,11 @@ export function installFetch() {
     }
     calls.n8n.push({ url, headers: init.headers, body: init.body, redirect: init.redirect });
     if (state.n8n === 'down') throw new TypeError('fetch failed');
+    if (typeof state.n8n === 'object') {
+      return new Response(null, { status: state.n8n.status, headers: { Location: state.n8n.location } });
+    }
     const status = state.n8n === 'up' ? 303 : state.n8n;
-    return new Response(null, { status, headers: status === 303 ? { Location: '/thank-you.html' } : {} });
+    return new Response(null, { status, headers: status === 303 ? { Location: 'https://lumenandpixel.com/thank-you.html' } : {} });
   };
   return { calls, state };
 }

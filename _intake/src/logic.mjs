@@ -72,9 +72,22 @@ export function forwardHeaders(row, env) {
   return h;
 }
 
-/* n8n's webhook answers the browser with a 303 today; the Worker does not follow it.
-   Any 2xx or 3xx means n8n has the submission. */
-export const isDelivered = status => status >= 200 && status < 400;
+/* Delivered = a 2xx, or a 303 whose Location is an absolute https URL on the site
+   (n8n's own redirect to the done page). Any other 3xx, e.g. a tunnel or access gate
+   redirecting to a login page, is NOT delivered: the row is kept and retried, never
+   marked done and deleted. A relative Location is refused too (a login page on the
+   tunnel's host would look like that). */
+const SITE_HOSTS = new Set(['lumenandpixel.com', 'www.lumenandpixel.com']);
+export function isDelivered(status, location) {
+  if (status >= 200 && status < 300) return true;
+  if (status !== 303 || !location) return false;
+  try {
+    const u = new URL(location);
+    return u.protocol === 'https:' && SITE_HOSTS.has(u.hostname);
+  } catch {
+    return false;
+  }
+}
 
 /* Times in messages to the owner are Lisbon wall-clock. */
 export function lisbon(iso) {
