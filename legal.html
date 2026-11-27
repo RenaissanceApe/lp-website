@@ -144,11 +144,11 @@
       <li>Where purchases happen through Gumroad, payment and checkout data are handled on Gumroad&#8217;s side under their own terms and privacy practices.</li>
     </ul>
     <h3 class="heading">Third-party services used on this website</h3>
-    <p>No third-party code runs in your browser on this website. Fonts are served from this domain, and there is no analytics, advertising, tracking, or embedded marketing script on any page. Every page you load passes through Cloudflare and GitHub Pages, which deliver this website. Beyond that, your browser contacts n8n Cloud only when you submit a form, and cal.com or Gumroad only if you follow a link to them. Notion, Brevo, Google and Telegram never receive anything from your browser: n8n passes form data on to them.</p>
+    <p>No third-party code runs in your browser on this website. Fonts are served from this domain, and there is no analytics, advertising, tracking, or embedded marketing script on any page. Every page you load passes through Cloudflare and GitHub Pages, which deliver this website. When you submit a form, your browser sends it to this website&#8217;s own address, where Cloudflare receives it. Beyond that, your browser contacts cal.com or Gumroad only if you follow a link to them. Notion, Brevo, Google and Telegram never receive anything from your browser: n8n passes form data on to them.</p>
     <ul>
       <li><strong>GitHub Pages</strong> — hosts this website. Requests, including IP addresses, are processed by GitHub to deliver pages.</li>
-      <li><strong>Cloudflare</strong> — sits in front of this website and handles every visit before it reaches GitHub Pages. It processes your requests, including your IP address, to deliver and protect the site.</li>
-      <li><strong>n8n Cloud</strong> — receives contact form submissions and newsletter sign-ups when you submit them, and passes them to us.</li>
+      <li><strong>Cloudflare</strong> — sits in front of this website and handles every visit before it reaches GitHub Pages. It processes your requests, including your IP address, to deliver and protect the site. It is also the first to receive what you send through a form: it stores a copy in the European Union, without your IP address, and passes it to n8n. The copy is deleted 7 days after n8n has received it; if n8n cannot be reached, it is kept until n8n can.</li>
+      <li><strong>n8n</strong> — our automation software. It receives contact form submissions and newsletter sign-ups from Cloudflare and passes them to us and to the services below.</li>
       <li><strong>Notion</strong> — stores contact form enquiries so we can reply and follow up, and records your newsletter consent: the wording you agreed to and when.</li>
       <li><strong>Brevo</strong> — receives newsletter sign-ups and sends the newsletter. It sends the confirmation email you must accept before you are subscribed, and records when you confirmed.</li>
       <li><strong>Google (Gmail)</strong> — emails us each new enquiry so we can reply to it.</li>
@@ -157,7 +157,7 @@
       <li><strong>Gumroad</strong> — only if you follow a link to our store. Purchases, payment and checkout data are handled entirely on Gumroad's side under their own terms.</li>
     </ul>
     <h3 class="heading">How long we keep data</h3>
-    <p>We keep enquiry and newsletter data only for as long as it is reasonably necessary for communication, operational follow-up, or legal and administrative purposes.</p>
+    <p>We keep enquiry and newsletter data only for as long as it is reasonably necessary for communication, operational follow-up, or legal and administrative purposes. The copy of a form submission held by Cloudflare is deleted 7 days after it reaches n8n.</p>
     <h3 class="heading">Your rights</h3>
     <p>You may request access to, correction of, or deletion of your personal data, or object to certain types of processing, as applicable under relevant law. Newsletter emails also include an unsubscribe option.</p>
     <h3 class="heading">How to contact us</h3>

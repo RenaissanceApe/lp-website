@@ -153,6 +153,7 @@ before Languages.
 
 | Version | What | How it works |
 |---|---|---|
+| v1.63 | Form front door: the forms post to a Cloudflare Worker route (`/intake`) that stores each submission in D1 (EU), redirects the visitor and forwards to n8n with retries, one Telegram alert after 10 minutes waiting, copies deleted 7 days after n8n confirmed. Deploy job, Worker tests in CI, Legal wording (waits for the owner's yes). Solo PR, for the move of n8n off n8n Cloud (lp-ops #141) | [FORM_FRONT_DOOR.md](FORM_FRONT_DOOR.md), `_intake/`, `INTAKE.md` |
 | v1.62 | Newsletter to Brevo (lp-ops #65): Legal page (EN and PT) and `INTAKE.md` name Brevo instead of MailerLite; an unpublished n8n v2-01 version sends consented sign-ups to Brevo double opt-in. Ships together with the owner publishing that version. Solo PR | `legal.html`, `pt/legal.html`, `INTAKE.md`, n8n v2-01 |
 | v1.60 | Legal page lists all nine outside services (Cloudflare, Notion, MailerLite, Gmail and Telegram added) and says every page passes through Cloudflare and GitHub Pages (T1, #78). Solo PR | `legal.html`, `pt/legal.html` |
 | v1.59 | Contact and enquiry path (CE1–CE3): a contact link at the end of each service and on Home (`?service=` pre-fill), phone arrivals at `#contact-form` land on the reply promise above the form, required fields marked, and a footer page-link row on every page. CE4 and CE5 not built (D52, D53) | [CONTACT.md](CONTACT.md) |

@@ -93,8 +93,11 @@ browser changes the site's legal position and means updating `legal.html` and
 
 This covers **page load**. Submitting a form is different.
 
-Every form is a **native HTML `<form method="POST">`** to one n8n Cloud
-endpoint, `…/webhook/inbound-lead`. No JavaScript is involved in submitting.
+Every form is a **native HTML `<form method="POST">`** to the form front door,
+`https://www.lumenandpixel.com/intake`: a Cloudflare Worker (code in `_intake/`)
+that stores the submission in the EU, redirects the visitor and forwards it to
+n8n, retrying until n8n confirms ([`_docs/FORM_FRONT_DOOR.md`](_docs/FORM_FRONT_DOOR.md)).
+No JavaScript is involved in submitting.
 **The full contract — fields per `form_type`, honeypot, consent wording and
 redirects — is in [`INTAKE.md`](INTAKE.md).** It is the site's only
 cross-system contract.
@@ -118,6 +121,7 @@ the site elsewhere has to reimplement it or lose it:
 | `_tools/` and `_docs/` are not published | Jekyll skips `_`-prefixed paths | They become **publicly readable** (dev tooling and planning notes, nothing secret). |
 | `pt/field-notes.html` redirects to `pt/field-notes/` | Nothing — it is a `<meta http-equiv="refresh">` stub, because Pages cannot issue a 301 | Replace with a real redirect and delete the stub |
 | Custom domain and HTTPS | `CNAME` plus the Pages configuration | Reconfigure at the new host |
+| `POST /intake` (every form) | A Cloudflare Worker route on the zone, deployed by `.github/workflows/intake-deploy.yml`, not by Pages | Keep the domain on Cloudflare, or point the four form `action`s at the Worker's `workers.dev` address |
 
 The first row is the one to be careful about: there is no `.gitignore`-style
 guarantee here. `_`-prefixed directories are unpublished **only** because Jekyll is

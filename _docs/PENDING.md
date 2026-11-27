@@ -13,6 +13,18 @@ release. Section 3: decisions, each with the answer assumed until the owner give
 
 ## 2. To try by hand
 
+### v1.63 Form front door
+
+- [ ] Before merging: steps 1–8 of [FORM_FRONT_DOOR.md](FORM_FRONT_DOOR.md) (database, token,
+      GitHub secrets, `deploy-intake` label, Worker secrets, one test, the ten-minute outage test).
+- [ ] After merging: one newsletter sign-up from `/pt/` lands on `/pt/check-your-inbox.html` and
+      Brevo's email arrives; one contact from `/about.html` lands on `/thank-you.html` and reaches
+      Notion.
+- [ ] After the n8n move: `N8N_WEBHOOK_URL` changed to the home address; one test arrives.
+- [ ] Legal page (EN and PT), "Third-party services": the Cloudflare line says it receives forms
+      first, stores a copy in the EU and deletes it 7 days after n8n has it; "n8n Cloud" is now
+      "n8n".
+
 ### v1.62 Newsletter to Brevo
 
 - [ ] Merge this only once the n8n Brevo version is published (the "Switch the newsletter to
@@ -223,3 +235,10 @@ assumed, and stays that way unless the owner says otherwise.
 | D79 | **Brevo (lp-ops #65).** The contact form's optional email box sends people to MailerLite today, in its own group. The Brevo version sends them to Brevo too (a second list), so MailerLite can close. Keep that, or stop adding contact-form opt-ins to any list? | A second Brevo list, as today |
 | D80 | **Brevo.** After someone clicks the confirmation link, Brevo must open a page. The draft opens the Home page (`/` or `/pt/`). A "you're subscribed" page would be a new page in both languages. | Home page |
 | D81 | **Brevo.** The Legal line says Brevo "records when you confirmed"; the MailerLite line also said it records the IP address. Check in Brevo whether it keeps the IP of the confirmation; if it does, add it back to the line. | Time only |
+| D82 | **Form front door.** The address the forms post to: a Worker route on the site's own domain (`www.lumenandpixel.com/intake` and `lumenandpixel.com/intake`; both hosts are already proxied, so no DNS change; the token needs Zone · Workers Routes · Edit, which is zone configuration) or the Worker's own `workers.dev` address (a second origin; no zone permission). | Route on the site's own domain, both hosts; forms post to `www` |
+| D83 | **Form front door.** Stored copies deleted 7 days after n8n confirmed them (long enough to replay a failed n8n run after a weekend). Shorter, longer? The Legal page states the number. | 7 days |
+| D84 | **Form front door.** A shared secret between the Worker and n8n (`X-LP-Intake-Secret`), so n8n's webhook refuses anything that did not come through the Worker. Needs a check in n8n v2-01 the same day. | Built but off: on only when the `INTAKE_SECRET` setting exists |
+| D85 | **Form front door.** The first deploy runs when you add the label `deploy-intake` to the pull request (a manual run only works once the job is on `main`, which is after the merge). Later deploys: by hand from Actions, or automatically when `_intake/` changes on `main`. OK? | As built |
+| D86 | **Form front door.** Submissions n8n never confirms are kept forever (spec: "kept until forwarded"). If n8n were gone for good they would pile up, including bot spam the honeypot would have discarded. Cap them (for example delete unconfirmed after 30 days, with a Telegram warning first)? | Kept until confirmed |
+| D87 | **Form front door.** The page a visitor sees only when a submission could be neither stored nor delivered (new visitor-facing text, EN and PT, in `_intake/src/logic.mjs`): wording OK? | As written |
+| D88 | **Form front door.** The Legal page now says "n8n — our automation software" instead of "n8n Cloud", true before and after the move. Once n8n runs at home it is no longer an outside service: keep it in the list, or move it into a sentence? | Kept in the list |
