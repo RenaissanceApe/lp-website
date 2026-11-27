@@ -6,6 +6,26 @@ Format: version → date → what changed and why.
 
 ---
 
+## v1.63 — November 2026
+
+### Form front door: the forms post to a Cloudflare Worker that never loses a submission
+
+What a visitor sees: nothing different. The contact form (About) and the newsletter form (Home),
+EN and PT, now post to `https://www.lumenandpixel.com/intake` instead of n8n Cloud. That address
+is a small Cloudflare Worker on the free plan (`_intake/`). It stores each submission in a
+database kept in the EU, sends the visitor to the same thank-you or check-your-inbox page as
+before, then passes the unchanged form to n8n and retries every minute until n8n confirms. This
+is for the move of n8n to a computer at home that can be off: one Worker setting says where n8n
+is. If forms wait more than 10 minutes, the owner gets one Telegram message with a count and a
+time, nothing personal. Stored copies are deleted 7 days after n8n confirmed them. The Legal page
+(EN and PT) says so; that wording waits for the owner's yes. A deploy job
+(`.github/workflows/intake-deploy.yml`) puts the Worker on Cloudflare and skips cleanly without
+its secrets; CI now also runs the Worker's tests. `INTAKE.md` describes the new first receiver,
+the headers sent to n8n and what counts as delivered. The owner's steps for Monday are in
+`_docs/FORM_FRONT_DOOR.md`. Nothing new loads on page load.
+
+---
+
 ## v1.62 — November 2026
 
 ### Newsletter moves to Brevo: Legal page and intake contract (lp-ops #65)

@@ -1,16 +1,24 @@
 # Intake contract
 
-The site's only cross-system contract: what its forms send to n8n, and what
-they expect back. If a form changes, this file changes in the same PR.
+The site's only cross-system contract: what its forms send, who receives it,
+what reaches n8n, and what the visitor gets back. If a form changes, this file
+changes in the same PR.
+
+Since v1.63 the forms post to the **form front door**, a Cloudflare Worker on the
+site's own domain. It stores each submission, answers the visitor, and forwards
+the unchanged body to n8n, retrying until n8n confirms. How it works and how it
+is run: [`_docs/FORM_FRONT_DOOR.md`](_docs/FORM_FRONT_DOOR.md); code in `_intake/`.
 
 ## Endpoint
 
 ```
-POST https://lumenandpixel.app.n8n.cloud/webhook/inbound-lead
+POST https://www.lumenandpixel.com/intake
 Content-Type: application/x-www-form-urlencoded
 ```
 
 - Every form on the site posts here. `form_type` tells them apart.
+- `/intake` is a Cloudflare Worker route on the site's own domain, not a page:
+  GitHub Pages never sees these requests. A `GET` there redirects to `/`.
 - Submission is a **native HTML form POST**. No JavaScript sends anything.
 - The browser enforces `required` fields and `type="email"` before posting.
 - The endpoint is public by design (see *Posture* below).
@@ -69,26 +77,84 @@ name, which would discard real visitors.
 
 ## Response
 
-The endpoint answers with a **303 redirect**:
+The Worker answers the visitor itself, before n8n has seen anything, with a
+**303 redirect** to an absolute URL on `https://www.lumenandpixel.com`:
 
 | `form_type` | `lang=en` | `lang=pt` |
 |---|---|---|
 | `contact` | `/thank-you.html` | `/pt/thank-you.html` |
 | `newsletter` | `/check-your-inbox.html` | `/pt/check-your-inbox.html` |
 
+Any `lang` other than `pt` is treated as `en`. Not stored, and sent back with a
+303 to `source_page` (or to `/` or `/pt/` when `source_page` is not a plain path
+on this site):
+
+- an `email` that is empty, longer than 254 characters or not `x@y.z`;
+- a `form_type` other than `contact` or `newsletter`.
+
+A body over 32 KB gets `413`. The honeypot is **not** checked here.
+
+If the submission can be neither stored nor delivered to n8n directly, the visitor
+gets a `503` page in their language saying it did not go through, asking them to
+email `info@lumenandpixel.com`, and showing their message so they can copy it.
+
 The site does not inspect the response beyond following the redirect.
+
+## Front door: store, forward, retry
+
+1. **Store.** Each accepted submission is written to a D1 database created in
+   Cloudflare's EU jurisdiction: an id, the time received, `form_type`, `lang`
+   and the body exactly as the browser sent it. The visitor's IP address and
+   headers are not stored.
+2. **Redirect** the visitor (above).
+3. **Forward** right after the response, then from a cron run every minute until
+   n8n confirms. While n8n is unreachable, each run sends one probe, not one
+   request per waiting submission.
+4. **Alert.** When a submission has waited more than 10 minutes, one Telegram
+   message to the owner: a count and a time, nothing the visitor typed. One more
+   when everything has gone through. Also one message if a submission could be
+   neither stored nor delivered.
+5. **Retention.** A stored copy is deleted **7 days after n8n confirmed it**.
+   Unconfirmed copies are kept until n8n confirms.
+6. If storing fails, the Worker forwards to n8n while the visitor waits; if that
+   succeeds the visitor is redirected as normal.
+
+Delivery is **at least once**: a retry after a lost answer can deliver a
+submission twice, with the same `X-LP-Submission-Id`.
+
+## Forwarding to n8n
+
+```
+POST <N8N_WEBHOOK_URL>            a Worker secret: n8n Cloud's /webhook/inbound-lead,
+                                  later the home n8n's address
+Content-Type: application/x-www-form-urlencoded
+X-LP-Submission-Id: <uuid>        the same on every retry; de-duplicate on it
+X-LP-Received-At: <ISO 8601 UTC>  when the visitor submitted
+X-LP-Attempt: <n>                 1 for the first try
+X-LP-Intake-Secret: <secret>      only when the INTAKE_SECRET setting exists
+```
+
+- The body is byte-for-byte what the browser sent: the fields above, honeypot
+  included. n8n changes nothing to receive it.
+- **Success is any 2xx or 3xx answer** (n8n's webhook answers with a 303; the
+  Worker does not follow it). Anything else, no answer within 10 seconds, or a
+  network error means "try again".
+- n8n sees Cloudflare's address, not the visitor's.
 
 ## Posture
 
 Public endpoint, native form POST, honeypot `lp_ref_code`, **no shared
-secret**: a public form cannot hold one, because anything in the page is
-readable by anyone. Screening happens on the n8n side.
+secret in the page**: a public form cannot hold one, because anything in the
+page is readable by anyone. Screening happens on the n8n side. The optional
+`X-LP-Intake-Secret` lives only between the Worker and n8n, so n8n can refuse
+anything that did not come through the front door.
 
 ## Downstream (outside this repo)
 
 Recorded so a reader knows where the data goes; the site depends only on the
 contract above.
 
+- The forms reach n8n only through the Worker above.
 - Newsletter signups go to **Brevo** via n8n workflow v2-01. Brevo runs
   double opt-in (its confirmation email, in the visitor's language) and
   records the confirmation. n8n also sends Brevo the language, source page,

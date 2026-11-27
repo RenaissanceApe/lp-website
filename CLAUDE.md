@@ -105,8 +105,9 @@ Every other file in the repo, this one included, is served on the public site.
 
 ## Forms and the intake contract
 
-- Every form is a native `<form method="POST">` to the n8n Cloud endpoint
-  `/webhook/inbound-lead`. No JavaScript submits anything.
+- Every form is a native `<form method="POST">` to the form front door,
+  `https://www.lumenandpixel.com/intake` (a Cloudflare Worker in `_intake/`, which forwards to
+  n8n; `_docs/FORM_FRONT_DOOR.md`). No JavaScript submits anything.
 - **`INTAKE.md` is the only cross-system contract.** If a form's fields, names, consent wording,
   honeypot or redirects change, `INTAKE.md` changes in the same PR, and the owner says yes first:
   n8n has to change with it.

@@ -2,7 +2,8 @@
  * redirect, the stored row, what reached n8n, retries, alerts and retention. */
 import { test, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
-import worker, { runScheduled } from '../src/worker.mjs';
+import worker from '../src/worker.mjs';
+import { runScheduled } from '../src/intake.mjs';
 import { makeDB, makeCtx, installFetch, ENV, post, CONTACT_EN, NEWSLETTER_PT, age } from './helpers.mjs';
 
 let db, env, ctx, net;

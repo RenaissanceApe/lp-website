@@ -62,7 +62,7 @@ form.append('metadata', new Blob([JSON.stringify({
   bindings: [{ type: 'd1', name: 'DB', database_id: d1 }],
   keep_bindings: ['secret_text', 'plain_text'],
 })], { type: 'application/json' }));
-for (const file of ['worker.mjs', 'logic.mjs']) {
+for (const file of ['worker.mjs', 'intake.mjs', 'logic.mjs']) {
   const src = fs.readFileSync(path.join(here, 'src', file));
   form.append(file, new Blob([src], { type: 'application/javascript+module' }), file);
 }
