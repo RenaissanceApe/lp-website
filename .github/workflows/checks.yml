@@ -69,3 +69,7 @@ jobs:
 
       - name: Run site checks
         run: node _tools/check.mjs
+
+      # The form front door (_intake/): pure logic and an end-to-end run on SQLite.
+      - name: Test the intake Worker
+        run: node --test --disable-warning=ExperimentalWarning '_intake/test/*.test.mjs'
