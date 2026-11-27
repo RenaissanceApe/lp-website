@@ -79,8 +79,8 @@ export async function handlePost(request, env, ctx) {
     return new Response('Payload too large', { status: 413 });
   }
   const params = new URLSearchParams(type.startsWith('application/x-www-form-urlencoded') ? body : '');
+  // Stored and forwarded whatever the verdict: n8n screens. The verdict only picks the redirect.
   const verdict = assess(params);
-  if (!verdict.ok) return redirect(env, verdict.redirect);
 
   const row = { id: crypto.randomUUID(), received_at: nowIso(), body, attempts: 0 };
   let stored = false;

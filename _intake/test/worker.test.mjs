@@ -42,12 +42,20 @@ test('honeypot filled: still stored and forwarded (n8n screens it)', async () =>
   assert.match(net.calls.n8n[0].body, /lp_ref_code=spam/);
 });
 
-test('invalid email: back to the source page, nothing stored or sent', async () => {
+test('invalid email: visitor back to the source page, but still stored and forwarded (n8n screens)', async () => {
   const res = await worker.fetch(post({ ...CONTACT_EN, email: 'not-an-email' }), env, ctx);
   assert.equal(res.headers.get('Location'), 'https://www.lumenandpixel.com/about.html');
   await ctx.settle();
-  assert.equal(rows().length, 0);
-  assert.equal(net.calls.n8n.length, 0);
+  assert.equal(rows().length, 1);
+  assert.equal(net.calls.n8n.length, 1);
+  assert.match(net.calls.n8n[0].body, /email=not-an-email/);
+});
+
+test('unknown form_type: back to the source page, still forwarded', async () => {
+  const res = await worker.fetch(post({ ...NEWSLETTER_PT, form_type: 'quiz' }), env, ctx);
+  assert.equal(res.headers.get('Location'), 'https://www.lumenandpixel.com/pt/');
+  await ctx.settle();
+  assert.equal(net.calls.n8n.length, 1);
 });
 
 test('secret header is added only when INTAKE_SECRET is set', async () => {

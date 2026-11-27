@@ -39,18 +39,21 @@ export function successPath(formType, lang) {
   return (lang === 'pt' ? '/pt' : '') + page;
 }
 
-/* Decide what to do with a posted body. Returns
- *   { ok: true,  formType, lang, redirect }  → store, forward, send visitor to redirect
- *   { ok: false, reason, lang, redirect }    → not stored; send visitor to redirect
- * The honeypot is deliberately NOT looked at: n8n screens it (INTAKE.md).
+/* Where to send the visitor. Every submission is stored and forwarded either way:
+ * n8n is the single screener and logs what it skips (agreed with Ops, v2-01). This
+ * only mirrors n8n's redirect rule for the visitor:
+ *   { ok: true,  formType, lang, redirect }          → the done page
+ *   { ok: false, reason, formType, lang, redirect }  → back to the source page
+ * The honeypot is deliberately NOT looked at here (spam gets the done page from n8n
+ * too, so the visitor-side answer is the same).
  */
 export function assess(params) {
   const lang = langOf(params);
   const back = safePath(params.get('source_page'), lang);
-  const formType = params.get('form_type') || '';
-  if (!FORM_TYPES.has(formType)) return { ok: false, reason: 'form_type', lang, redirect: back };
+  const formType = (params.get('form_type') || '').slice(0, 40);
+  if (!FORM_TYPES.has(formType)) return { ok: false, reason: 'form_type', formType, lang, redirect: back };
   const email = (params.get('email') || '').trim();
-  if (email.length > 254 || !EMAIL.test(email)) return { ok: false, reason: 'email', lang, redirect: back };
+  if (email.length > 254 || !EMAIL.test(email)) return { ok: false, reason: 'email', formType, lang, redirect: back };
   return { ok: true, formType, lang, redirect: successPath(formType, lang) };
 }
 

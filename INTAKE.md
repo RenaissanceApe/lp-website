@@ -85,14 +85,19 @@ The Worker answers the visitor itself, before n8n has seen anything, with a
 | `contact` | `/thank-you.html` | `/pt/thank-you.html` |
 | `newsletter` | `/check-your-inbox.html` | `/pt/check-your-inbox.html` |
 
-Any `lang` other than `pt` is treated as `en`. Not stored, and sent back with a
+Any `lang` other than `pt` is treated as `en`. The visitor is sent back with a
 303 to `source_page` (or to `/` or `/pt/` when `source_page` is not a plain path
-on this site):
+on this site) when:
 
-- an `email` that is empty, longer than 254 characters or not `x@y.z`;
-- a `form_type` other than `contact` or `newsletter`.
+- the `email` is empty, longer than 254 characters or not `x@y.z`;
+- the `form_type` is not `contact` or `newsletter`.
 
-A body over 32 KB gets `413`. The honeypot is **not** checked here.
+This mirrors n8n v2-01's own redirect rule. Those submissions are **still stored
+and forwarded**: n8n is the single screener and logs every submission it skips
+("skipped" in the Ops Log). The honeypot is **not** checked here; n8n gives spam
+the normal done page, so the visitor-side answer is the same.
+
+A body over 32 KB gets `413` and is not stored.
 
 If the submission can be neither stored nor delivered to n8n directly, the visitor
 gets a `503` page in their language saying it did not go through, asking them to
@@ -102,7 +107,7 @@ The site does not inspect the response beyond following the redirect.
 
 ## Front door: store, forward, retry
 
-1. **Store.** Each accepted submission is written to a D1 database created in
+1. **Store.** Each submission is written to a D1 database created in
    Cloudflare's EU jurisdiction: an id, the time received, `form_type`, `lang`
    and the body exactly as the browser sent it. The visitor's IP address and
    headers are not stored.
@@ -140,6 +145,12 @@ X-LP-Intake-Secret: <secret>      only when the INTAKE_SECRET setting exists
   Worker does not follow it). Anything else, no answer within 10 seconds, or a
   network error means "try again".
 - n8n sees Cloudflare's address, not the visitor's.
+- n8n answers right after its Normalize step, before Notion, Telegram and email
+  run: "delivered" means n8n received it, not that those steps worked. v2-01's
+  error handler (v2-00) covers them.
+- Agreed with Ops (owner of v2-01) on 27 Nov 2026; their copy is
+  `ops/n8n-home/FORWARDING_CONTRACT.md` in lp-ops. n8n checking the secret and
+  de-duplicating on `X-LP-Submission-Id` are proposed to the owner after the move.
 
 ## Posture
 

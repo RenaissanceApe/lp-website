@@ -8,7 +8,7 @@
 CREATE TABLE IF NOT EXISTS submissions (
   id              TEXT PRIMARY KEY,      -- sent to n8n as X-LP-Submission-Id
   received_at     TEXT NOT NULL,         -- ISO 8601 UTC, sent as X-LP-Received-At
-  form_type       TEXT NOT NULL,         -- contact | newsletter
+  form_type       TEXT NOT NULL,         -- as sent (contact | newsletter; anything else is forwarded too)
   lang            TEXT NOT NULL,         -- en | pt
   body            TEXT NOT NULL,
   attempts        INTEGER NOT NULL DEFAULT 0,

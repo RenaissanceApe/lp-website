@@ -15,9 +15,10 @@ visitor's browser ──POST /intake──▶ Worker ──store──▶ D1 dat
                      every minute: retry what n8n has not confirmed
 ```
 
-1. The Worker checks the email and `form_type` (bad → back to the page, nothing stored), stores
-   the form exactly as sent, and sends the visitor to the thank-you or check-your-inbox page in
-   their language. The visitor never waits for n8n.
+1. The Worker stores the form exactly as sent and sends the visitor to the thank-you or
+   check-your-inbox page in their language (or back to the form when the email or `form_type`
+   is wrong, the same rule n8n uses). The visitor never waits for n8n. Every form is stored and
+   forwarded, even a wrong one: n8n is the one place that screens and logs what it skips.
 2. Straight after, it sends the same form to n8n, with a submission id. n8n answering 2xx or 3xx
    means "got it".
 3. A run every minute retries anything n8n has not confirmed. While n8n is off it sends one try a
@@ -40,6 +41,15 @@ the stored copy; after that the copy is only a duplicate of what Notion holds.
 the site's own address, so nothing new appears in the browser and there is no placeholder to
 replace. It needs one extra token permission (Workers Routes on the zone). It is zone
 configuration, not a DNS record.
+
+**The route cannot hide a real page.** The patterns are `www.lumenandpixel.com/intake` and
+`lumenandpixel.com/intake`, with no `*`, so they match only the path `/intake` exactly. The
+repository has no file or folder at `/intake`, `/intake.html` or `/intake/` (checked 27 Nov
+2026 with `git ls-files`; the only near names are `INTAKE.md`, a different path, and the
+unpublished `_intake/`). Both host names are behind Cloudflare's proxy, so no DNS change.
+The forms post to `www` (the canonical host, `CNAME`). The apex route is there so a POST that
+reaches `lumenandpixel.com/intake` is answered by the Worker too, instead of being redirected by
+GitHub Pages to `www`, which would turn it into a GET and lose the form.
 
 **Free plan, checked 27 Nov 2026 on developers.cloudflare.com:** Workers 100,000 requests a day,
 10 ms CPU per request, 50 outgoing requests per run, 5 cron triggers per account (we use 1);
